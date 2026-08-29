@@ -528,7 +528,7 @@
             <div id="dueFeed"></div>
         </div>
         <div class="priority-box box-swipe">
-            <div class="box-title">💳 Best to Use Today (~45 Days Grace)</div>
+            <div class="box-title">💳 Best to Use Today (Max Grace Period)</div>
             <div id="swipeFeed"></div>
         </div>
         <div class="priority-box box-gen">
@@ -729,17 +729,20 @@ function renderPriorityBanners(day) {
         `).join('');
     }
 
-    // 2. Best Swipe
+    // 2. Best Swipe (Calculates Exact Grace Days Remaining for each card)
     const bestSwipe = cards
         .map(c => {
-            let passed = (day >= c.billDay) ? (day - c.billDay) : (30 + day - c.billDay);
+            let daysToBill = calcDaysLeft(c.billDay, day);
+            let daysFromBillToDue = (c.dueDay >= c.billDay) ? (c.dueDay - c.billDay) : (30 - c.billDay + c.dueDay);
+            let totalGraceLeft = daysToBill + daysFromBillToDue;
+            
             let safe30 = c.limit * 0.30;
             let buffer = safe30 - c.current;
-            return { ...c, passed, buffer };
+            return { ...c, totalGraceLeft, buffer, daysToBill };
         })
-        .filter(c => c.buffer > 300 && c.passed >= 0 && c.passed <= 7)
-        .sort((a, b) => a.passed - b.passed)
-        .slice(0, 2);
+        .filter(c => c.buffer > 200 && c.daysToBill > 1) // Safe limit remaining and not generating tomorrow
+        .sort((a, b) => b.totalGraceLeft - a.totalGraceLeft || b.buffer - a.buffer)
+        .slice(0, 4); // Shows Top 4 recommended cards
 
     const swipeBox = document.getElementById('swipeFeed');
     if (!bestSwipe.length) {
@@ -749,9 +752,9 @@ function renderPriorityBanners(day) {
             <div class="priority-item">
                 <div>
                     <div class="p-main">${c.name}</div>
-                    <div class="p-sub">Bill: <strong>${c.billDay}th</strong> | Safe Buffer: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
+                    <div class="p-sub">Bill: <strong>${c.billDay}th</strong> | Buffer: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
                 </div>
-                <span class="badge b-success">~45d Free</span>
+                <span class="badge b-success">~${c.totalGraceLeft}d Free</span>
             </div>
         `).join('');
     }
