@@ -632,7 +632,7 @@
 <script>
 /**
  * 1. SECURITY & GITHUB SYNC ENGINE
- * - Hardcoded Internal AES Key (No prompt required)
+ * - Hardcoded Internal AES Key
  * - 3-Part Obfuscated Token to bypass scanner detection
  */
 const INTERNAL_AES_PASSPHRASE = "SGM_FINANCE_SECURE_VAULT_2026_PROD";
@@ -690,7 +690,6 @@ function calcDaysLeft(targetDay, currentDay) {
 function init() {
     document.getElementById('datePicker').value = new Date().toISOString().split('T')[0];
     renderAll();
-    // Auto sync from GitHub cloud on launch
     fetchCloudData(true);
 }
 
@@ -730,7 +729,7 @@ function renderPriorityBanners(day) {
         `).join('');
     }
 
-    // 2. Best Swipe (Statement just generated, spend under 30%)
+    // 2. Best Swipe
     const bestSwipe = cards
         .map(c => {
             let passed = (day >= c.billDay) ? (day - c.billDay) : (30 + day - c.billDay);
@@ -957,7 +956,7 @@ function deleteCard(id) {
 }
 
 /**
- * 2. AUTOMATIC GITHUB AES-256 SYNC
+ * 2. GITHUB AES-256 SYNC WITH SUCCESS NOTIFICATIONS
  */
 function updateStatus(state, msg) {
     const dot = document.getElementById('syncDot');
@@ -977,7 +976,7 @@ function fromBase64Utf8(str) {
 async function saveAndPushCloud() {
     localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
     renderAll();
-    updateStatus('busy', 'Encrypting & Syncing...');
+    updateStatus('busy', 'Encrypting & Saving...');
 
     try {
         const rawJson = JSON.stringify(cards);
@@ -1017,13 +1016,15 @@ async function saveAndPushCloud() {
         if (res.ok) {
             const resData = await res.json();
             fileSha = resData.content.sha;
-            updateStatus('synced', 'Cloud Synced');
+            updateStatus('synced', 'Cloud Saved Successfully');
+            alert('✅ Cloud Saved Successfully!');
         } else {
             throw new Error('API Sync Failed: ' + res.status);
         }
     } catch (e) {
         console.error(e);
         updateStatus('error', 'Sync Failed');
+        alert('❌ Sync Fail ho gaya. Connection ya Token check karein.');
     }
 }
 
@@ -1049,13 +1050,14 @@ async function fetchCloudData(silent = false) {
                 cards = JSON.parse(decrypted);
                 localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
                 renderAll();
-                updateStatus('synced', 'Live Synced');
+                updateStatus('synced', 'Cloud Synced');
+                if (!silent) alert('✅ Cloud Data Successfully Loaded!');
                 return;
             }
         }
     } catch (e) {
         console.error(e);
-        updateStatus('synced', 'Local Loaded');
+        updateStatus('synced', 'Local Ready');
     }
 }
 
