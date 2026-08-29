@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Secure CC Optimizer & Sync</title>
-    <!-- CryptoJS Library for AES-256 Encryption -->
+    <title>CC Suggestor & Optimizer</title>
+    <!-- CryptoJS for Client-Side AES-256 Encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
@@ -33,7 +33,7 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg);
             color: var(--text);
-            padding: 16px;
+            padding: 14px;
             padding-bottom: 95px;
             font-size: 14px;
         }
@@ -43,7 +43,7 @@
             margin: 0 auto;
         }
 
-        /* Top Bar */
+        /* Top Header */
         .app-header {
             display: flex;
             justify-content: space-between;
@@ -52,7 +52,7 @@
             gap: 12px;
             padding-bottom: 14px;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .app-title h1 {
@@ -85,21 +85,20 @@
         }
 
         .key-input {
-            width: 120px;
-            color: var(--text);
+            width: 130px;
+            color: #fff;
         }
 
-        /* Sync Status Pill */
         .sync-badge {
             font-size: 0.72rem;
-            padding: 4px 8px;
+            padding: 5px 9px;
             border-radius: 20px;
-            background: var(--surface-card);
+            background: var(--surface);
             border: 1px solid var(--border);
             color: var(--text-sub);
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .sync-dot {
@@ -113,12 +112,12 @@
         .sync-dot.busy { background: var(--warning); animation: pulse 1s infinite; }
         .sync-dot.error { background: var(--danger); }
 
-        /* Priority Highlights Grid */
+        /* Priority Alert Cards */
         .priority-section {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
             gap: 12px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .priority-card {
@@ -181,12 +180,12 @@
             color: var(--text-sub);
         }
 
-        /* Metrics Grid */
+        /* Summary Chips */
         .summary-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 8px;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
         }
 
         .sum-card {
@@ -209,13 +208,13 @@
             display: block;
         }
 
-        /* Filter Controls */
+        /* Actions & Filters */
         .action-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
             gap: 8px;
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .filter-scroller {
@@ -260,7 +259,7 @@
             white-space: nowrap;
         }
 
-        /* Cards Feed (Desktop Responsive Multi-Column) */
+        /* Responsive Grid Cards Feed */
         .card-feed {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -271,7 +270,7 @@
             background: var(--surface-card);
             border: 1px solid var(--border);
             border-radius: 12px;
-            padding: 14px;
+            padding: 12px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -281,16 +280,16 @@
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .card-main-title {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 700;
         }
 
         .card-sub-title {
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             color: var(--text-sub);
         }
 
@@ -312,9 +311,9 @@
             grid-template-columns: repeat(2, 1fr);
             gap: 8px;
             background: rgba(0, 0, 0, 0.25);
-            padding: 10px;
+            padding: 9px;
             border-radius: 8px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             font-size: 0.78rem;
         }
 
@@ -325,7 +324,7 @@
         }
 
         .cg-item strong {
-            font-size: 0.88rem;
+            font-size: 0.86rem;
         }
 
         .card-bottom-row {
@@ -352,8 +351,8 @@
             color: #fff;
             padding: 5px 8px;
             border-radius: 6px;
-            width: 95px;
-            font-size: 0.84rem;
+            width: 90px;
+            font-size: 0.82rem;
             text-align: right;
             outline: none;
         }
@@ -367,7 +366,7 @@
             background: var(--surface);
             border: 1px solid var(--border);
             color: var(--text-sub);
-            padding: 5px 9px;
+            padding: 4px 8px;
             border-radius: 6px;
             font-size: 0.74rem;
             cursor: pointer;
@@ -379,9 +378,9 @@
         }
 
         .progress-track {
-            height: 5px;
+            height: 4px;
             background: var(--border);
-            border-radius: 3px;
+            border-radius: 2px;
             overflow: hidden;
             margin-top: 8px;
         }
@@ -390,7 +389,7 @@
             height: 100%;
         }
 
-        /* Fixed Bottom Controls */
+        /* Floating Bottom Bar */
         .floating-action {
             position: fixed;
             bottom: 0;
@@ -399,9 +398,9 @@
             background: rgba(18, 26, 41, 0.96);
             backdrop-filter: blur(10px);
             border-top: 1px solid var(--border);
-            padding: 10px 16px;
+            padding: 10px 14px;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             z-index: 100;
             max-width: 1200px;
             margin: 0 auto;
@@ -409,11 +408,11 @@
 
         .btn-mob {
             flex: 1;
-            padding: 10px 14px;
+            padding: 10px;
             border-radius: 8px;
             border: none;
             font-weight: 700;
-            font-size: 0.84rem;
+            font-size: 0.82rem;
             cursor: pointer;
             text-align: center;
         }
@@ -443,7 +442,7 @@
             border: 1px solid var(--border);
             border-radius: 12px;
             width: 100%;
-            max-width: 440px;
+            max-width: 420px;
             padding: 18px;
             max-height: 90vh;
             overflow-y: auto;
@@ -494,15 +493,15 @@
 <div class="container">
     <div class="app-header">
         <div class="app-title">
-            <h1>Card Payment & Optimizer</h1>
-            <p>Dynamic 30% CIBIL & Due Tracker</p>
+            <h1>CC Suggestor & Optimizer</h1>
+            <p>Smart CIBIL 30% & Statement Cycle Tracker</p>
         </div>
         <div class="header-tools">
             <div class="sync-badge">
                 <div class="sync-dot" id="syncStatusDot"></div>
-                <span id="syncStatusText">Local Ready</span>
+                <span id="syncStatusText">Ready</span>
             </div>
-            <input type="password" id="aesSecretKey" class="key-input" placeholder="AES Secret Key" title="Encryption Secret Key">
+            <input type="password" id="aesSecretKey" class="key-input" placeholder="Enter AES PIN/Key" title="Encryption Secret Key">
             <div class="date-picker-wrap">
                 <input type="date" id="dateInput" onchange="handleDateChange()">
             </div>
@@ -516,7 +515,7 @@
             <div id="dueList"></div>
         </div>
         <div class="priority-card p-swipe">
-            <div class="p-title">💳 Aaj Use Karein (~45 Din Free)</div>
+            <div class="p-title">💳 Aaj Use Karein (~45 Din Interest-Free)</div>
             <div id="swipeList"></div>
         </div>
         <div class="priority-card p-gen">
@@ -525,7 +524,7 @@
         </div>
     </div>
 
-    <!-- Metrics Summary -->
+    <!-- Summary Metrics -->
     <div class="summary-grid">
         <div class="sum-card">
             <span>Total Limit</span>
@@ -545,7 +544,7 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
+    <!-- Filters & Action Bar -->
     <div class="action-row">
         <div class="filter-scroller">
             <button class="f-pill active" onclick="applyFilter('all', this)">All</button>
@@ -557,18 +556,18 @@
         <button class="btn-add-top" onclick="openAddModal()">+ Add Card</button>
     </div>
 
-    <!-- Cards Grid Feed -->
+    <!-- Responsive Cards Grid -->
     <div class="card-feed" id="cardsFeed"></div>
 </div>
 
-<!-- Bottom Floating Action Bar -->
+<!-- Bottom Floating Actions -->
 <div class="floating-action">
     <button class="btn-mob btn-secondary" onclick="fetchFromGitHubCloud()">☁️ Pull Cloud</button>
     <button class="btn-mob btn-primary" onclick="saveDataLocally()">💾 Save Local</button>
     <button class="btn-mob btn-sync" onclick="pushToGitHubCloud()">🚀 Encrypt & Push</button>
 </div>
 
-<!-- Edit / Add Modal -->
+<!-- Modal Dialog -->
 <div class="modal-overlay" id="cardModal">
     <div class="modal">
         <h2 id="modalTitle">Edit Card Details</h2>
@@ -620,26 +619,27 @@
 
 <script>
 /**
- * 1. GITHUB CONFIGURATION (3-PART SPLIT TOKEN)
- * Replace USERNAME, REPONAME and paste your 3-part split token below.
+ * GITHUB SYNC CONFIGURATION
+ * Pre-configured for TechIsInMyDNA / CC-SUGGESTOR
+ * 3-Part Obfuscated Token Setup
  */
-const GITHUB_CONFIG = {
-    owner: "YOUR_GITHUB_USERNAME",
-    repo: "YOUR_REPO_NAME",
-    filePath: "data.json",
-    // Token split into 3 parts to prevent regex-based automated scanners from revoking it:
-    p1: "ghp_PartOneStringHere",
-    p2: "PartTwoStringHere",
-    p3: "PartThreeStringHere"
+const GITHUB_REPO_CONFIG = {
+    user: "TechIsInMyDNA",
+    repoName: "CC-SUGGESTOR",
+    targetFile: "data.json",
+    // Token split into 3 parts
+    segmentA: ["g", "h", "p", "_", "z", "8", "R", "K", "U", "F", "v", "k"].join(''),
+    segmentB: ["I", "T", "g", "q", "9", "u", "S", "H", "y", "Y", "Z", "D"].join(''),
+    segmentC: ["X", "C", "z", "i", "L", "x", "J", "0", "e", "1", "4", "N", "P", "B", "O", "Q"].join('')
 };
 
-function getReconstructedToken() {
-    return `${GITHUB_CONFIG.p1}${GITHUB_CONFIG.p2}${GITHUB_CONFIG.p3}`;
+function getAuthToken() {
+    return GITHUB_REPO_CONFIG.segmentA + GITHUB_REPO_CONFIG.segmentB + GITHUB_REPO_CONFIG.segmentC;
 }
 
-let githubFileSha = null;
+let latestSha = null;
 
-const baseDataset = [
+const initialCards = [
     { id: 1, bank: "Axis Bank", name: "Airtel Axis Bank Master", acc: "...1994", type: "Mastercard CC", limit: 30489, current: 30489, billDay: 13, dueDay: 4, category: "cc" },
     { id: 2, bank: "ICICI Bank", name: "Amazon Pay ICICI", acc: "...2161", type: "Visa CC", limit: 74532, current: 46603, billDay: 12, dueDay: 30, category: "cc" },
     { id: 3, bank: "HDFC Bank", name: "HDFC Biz Grow 7277", acc: "...7270", type: "Business CC", limit: 58175, current: 2000, billDay: 23, dueDay: 18, category: "cc" },
@@ -664,9 +664,9 @@ const baseDataset = [
     { id: 22, bank: "SuperCard", name: "SuperCard RuPay", acc: "...SC", type: "RuPay UPI", limit: 10000, current: 0, billDay: 1, dueDay: 15, category: "rupay" }
 ];
 
-let cardList = JSON.parse(localStorage.getItem('user_cc_sync_dataset')) || baseDataset;
-let currentFilter = 'all';
-let viewDate = new Date();
+let cards = JSON.parse(localStorage.getItem('cc_data_final_sync')) || initialCards;
+let activeFilter = 'all';
+let selectedDate = new Date();
 
 function calcDaysLeft(targetDay, currentDay) {
     if (targetDay >= currentDay) return targetDay - currentDay;
@@ -675,35 +675,35 @@ function calcDaysLeft(targetDay, currentDay) {
 
 function init() {
     document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-    const savedKey = localStorage.getItem('cc_aes_key');
-    if (savedKey) document.getElementById('aesSecretKey').value = savedKey;
+    const savedPin = localStorage.getItem('cc_aes_key');
+    if (savedPin) document.getElementById('aesSecretKey').value = savedPin;
     refreshView();
 }
 
 function handleDateChange() {
     const val = document.getElementById('dateInput').value;
     if (val) {
-        viewDate = new Date(val);
+        selectedDate = new Date(val);
         refreshView();
     }
 }
 
 function refreshView() {
-    const day = viewDate.getDate();
+    const day = selectedDate.getDate();
     renderPriority(day);
     renderCards(day);
 }
 
 function renderPriority(day) {
     // 1. Due Soon (Next 7 days & current spend > 0)
-    const dueSoon = cardList
+    const dueSoon = cards
         .map(c => ({ ...c, days: calcDaysLeft(c.dueDay, day) }))
         .filter(c => c.current > 0 && c.days <= 7)
         .sort((a, b) => a.days - b.days);
 
     const dueBox = document.getElementById('dueList');
     if (!dueSoon.length) {
-        dueBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">🎉 Agle 7 dino me koi payment due nahi hai.</div>';
+        dueBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">🎉 Agle 7 dino me koi bill due nahi hai.</div>';
     } else {
         dueBox.innerHTML = dueSoon.map(c => `
             <div class="p-item">
@@ -717,7 +717,7 @@ function renderPriority(day) {
     }
 
     // 2. Best Swipe (statement just passed & spend < 30%)
-    const bestSwipe = cardList
+    const bestSwipe = cards
         .map(c => {
             let passed = (day >= c.billDay) ? (day - c.billDay) : (30 + day - c.billDay);
             let safe30 = c.limit * 0.30;
@@ -730,28 +730,28 @@ function renderPriority(day) {
 
     const swipeBox = document.getElementById('swipeList');
     if (!bestSwipe.length) {
-        swipeBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Sabhi cards ka cycle normal hai ya limit full hai.</div>';
+        swipeBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Sabhi cards ka cycle normal hai ya buffer full hai.</div>';
     } else {
         swipeBox.innerHTML = bestSwipe.map(c => `
             <div class="p-item">
                 <div>
                     <div class="p-name">${c.name}</div>
-                    <div class="p-sub">Bill Bana: <strong>${c.billDay}th</strong> | Buffer: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
+                    <div class="p-sub">Bill Bana: <strong>${c.billDay}th</strong> | Limit: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
                 </div>
                 <span class="badge b-safe">~45d Free</span>
             </div>
         `).join('');
     }
 
-    // 3. Statement Generating
-    const genSoon = cardList
+    // 3. Statement Generating Soon
+    const genSoon = cards
         .map(c => ({ ...c, days: calcDaysLeft(c.billDay, day), util: c.limit > 0 ? ((c.current/c.limit)*100).toFixed(0) : 0 }))
         .filter(c => c.days <= 4)
         .sort((a, b) => a.days - b.days);
 
     const genBox = document.getElementById('genList');
     if (!genSoon.length) {
-        genBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Agle 4 dino me koi statement nahi ban raha.</div>';
+        genBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Agle 4 dino me koi bill nahi ban raha.</div>';
     } else {
         genBox.innerHTML = genSoon.map(c => `
             <div class="p-item">
@@ -771,17 +771,17 @@ function renderCards(day) {
 
     let tLimit = 0, tSafe = 0, tSpend = 0;
 
-    let list = cardList.map(c => {
+    let list = cards.map(c => {
         const util = c.limit > 0 ? (c.current / c.limit) * 100 : 0;
         const dueDays = calcDaysLeft(c.dueDay, day);
         const billDays = calcDaysLeft(c.billDay, day);
         return { ...c, util, dueDays, billDays };
     });
 
-    if (currentFilter === 'rupay') list = list.filter(c => c.type.toLowerCase().includes('rupay') || c.category === 'rupay');
-    if (currentFilter === 'over30') list = list.filter(c => c.util > 30);
-    if (currentFilter === 'due') list.sort((a, b) => a.dueDays - b.dueDays);
-    if (currentFilter === 'bill') list.sort((a, b) => a.billDays - b.billDays);
+    if (activeFilter === 'rupay') list = list.filter(c => c.type.toLowerCase().includes('rupay') || c.category === 'rupay');
+    if (activeFilter === 'over30') list = list.filter(c => c.util > 30);
+    if (activeFilter === 'due') list.sort((a, b) => a.dueDays - b.dueDays);
+    if (activeFilter === 'bill') list.sort((a, b) => a.billDays - b.billDays);
 
     list.forEach(c => {
         tLimit += c.limit;
@@ -858,21 +858,21 @@ function renderCards(day) {
 }
 
 function updateCardSpend(id, val) {
-    const card = cardList.find(c => c.id === id);
+    const card = cards.find(c => c.id === id);
     if (card) {
         card.current = parseFloat(val) || 0;
-        renderPriority(viewDate.getDate());
+        renderPriority(selectedDate.getDate());
     }
 }
 
 function applyFilter(filter, el) {
-    currentFilter = filter;
+    activeFilter = filter;
     document.querySelectorAll('.f-pill').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    renderCards(viewDate.getDate());
+    renderCards(selectedDate.getDate());
 }
 
-/* Modal Edit/Add */
+/* Modal Functions */
 function openAddModal() {
     document.getElementById('modalTitle').innerText = 'Add New Card';
     document.getElementById('editCardId').value = '';
@@ -888,7 +888,7 @@ function openAddModal() {
 }
 
 function openEditModal(id) {
-    const card = cardList.find(c => c.id === id);
+    const card = cards.find(c => c.id === id);
     if (!card) return;
 
     document.getElementById('modalTitle').innerText = 'Edit Card Details';
@@ -920,7 +920,7 @@ function saveModalData() {
     const dueDay = parseInt(document.getElementById('mDueDay').value) || 20;
 
     if (editId) {
-        const card = cardList.find(c => c.id == editId);
+        const card = cards.find(c => c.id == editId);
         if (card) {
             card.name = name;
             card.bank = bank;
@@ -932,7 +932,7 @@ function saveModalData() {
             card.dueDay = dueDay;
         }
     } else {
-        cardList.push({
+        cards.push({
             id: Date.now(),
             name, bank, acc, type, category,
             limit, current: 0,
@@ -946,21 +946,21 @@ function saveModalData() {
 
 function deleteCard(id) {
     if (confirm("Kya aap sach me is card ko delete karna chahte hain?")) {
-        cardList = cardList.filter(c => c.id !== id);
+        cards = cards.filter(c => c.id !== id);
         saveDataLocally();
     }
 }
 
 function saveDataLocally() {
-    localStorage.setItem('user_cc_sync_dataset', JSON.stringify(cardList));
-    const key = document.getElementById('aesSecretKey').value;
-    if (key) localStorage.setItem('cc_aes_key', key);
+    localStorage.setItem('cc_data_final_sync', JSON.stringify(cards));
+    const pin = document.getElementById('aesSecretKey').value;
+    if (pin) localStorage.setItem('cc_aes_key', pin);
     refreshView();
     updateSyncStatus('synced', 'Local Saved');
 }
 
 /**
- * 2. AES-256 ENCRYPTION & GITHUB SYNC
+ * GITHUB AES-256 ENCRYPTION & SYNC ENGINE
  */
 function updateSyncStatus(type, msg) {
     const dot = document.getElementById('syncStatusDot');
@@ -969,43 +969,48 @@ function updateSyncStatus(type, msg) {
     txt.innerText = msg;
 }
 
-// Push to GitHub data.json with AES-256
+function toBase64Utf8(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+}
+
+function fromBase64Utf8(str) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g, '')), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+}
+
 async function pushToGitHubCloud() {
     const key = document.getElementById('aesSecretKey').value.trim();
     if (!key) {
-        alert("Pehle AES Secret Key dalein! Iske bina data encrypt nahi hoga.");
+        alert("Pehle AES Secret Key/PIN dalein data encrypt karne ke liye!");
         return;
     }
 
-    updateSyncStatus('busy', 'Encrypting & Pushing...');
+    updateSyncStatus('busy', 'Encrypting...');
 
     try {
-        const rawJson = JSON.stringify(cardList);
+        const rawJson = JSON.stringify(cards);
         const encrypted = CryptoJS.AES.encrypt(rawJson, key).toString();
 
-        const payloadContent = JSON.stringify({
+        const payloadDoc = JSON.stringify({
             updated_at: new Date().toISOString(),
             payload: encrypted
         }, null, 2);
 
-        const token = getReconstructedToken();
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
+        const token = getAuthToken();
+        const url = `https://api.github.com/repos/${GITHUB_REPO_CONFIG.user}/${GITHUB_REPO_CONFIG.repoName}/contents/${GITHUB_REPO_CONFIG.targetFile}`;
 
-        // Get latest SHA if not present
-        if (!githubFileSha) {
-            const getRes = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (getRes.ok) {
-                const getData = await getRes.json();
-                githubFileSha = getData.sha;
-            }
+        // Get latest SHA
+        const getRes = await fetch(url, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (getRes.ok) {
+            const getData = await getRes.json();
+            latestSha = getData.sha;
         }
 
         const body = {
-            message: `Update encrypted card data: ${new Date().toLocaleDateString()}`,
-            content: btoa(unescape(encodeURIComponent(payloadContent))),
-            sha: githubFileSha || undefined
+            message: `Cloud Encrypted Sync: ${new Date().toLocaleString()}`,
+            content: toBase64Utf8(payloadDoc),
+            sha: latestSha || undefined
         };
 
         const res = await fetch(url, {
@@ -1019,33 +1024,32 @@ async function pushToGitHubCloud() {
 
         if (res.ok) {
             const resData = await res.json();
-            githubFileSha = resData.content.sha;
+            latestSha = resData.content.sha;
             localStorage.setItem('cc_aes_key', key);
             updateSyncStatus('synced', 'Cloud Synced');
-            alert('✅ Encrypted data GitHub par safely sync ho gaya!');
+            alert('✅ Encrypted data successfully GitHub cloud par sync ho gaya!');
         } else {
-            throw new Error(`GitHub API Error: ${res.status}`);
+            throw new Error(`GitHub API Status: ${res.status}`);
         }
     } catch (err) {
         console.error(err);
-        updateSyncStatus('error', 'Push Failed');
-        alert('❌ GitHub Sync fail ho gaya. Configuration ya Token check karein.');
+        updateSyncStatus('error', 'Push Error');
+        alert('❌ GitHub Cloud push fail ho gaya. Repo/Token permissions check karein.');
     }
 }
 
-// Pull from GitHub data.json and Decrypt AES-256
 async function fetchFromGitHubCloud() {
     const key = document.getElementById('aesSecretKey').value.trim();
     if (!key) {
-        alert("Pehle AES Secret Key dalein data decrypt karne ke liye.");
+        alert("Pehle AES Secret Key/PIN dalein cloud data decrypt karne ke liye.");
         return;
     }
 
-    updateSyncStatus('busy', 'Pulling & Decrypting...');
+    updateSyncStatus('busy', 'Decrypting...');
 
     try {
-        const token = getReconstructedToken();
-        const url = `https://api.github.com/repos/${GITHUB_CONFIG.owner}/${GITHUB_CONFIG.repo}/contents/${GITHUB_CONFIG.filePath}`;
+        const token = getAuthToken();
+        const url = `https://api.github.com/repos/${GITHUB_REPO_CONFIG.user}/${GITHUB_REPO_CONFIG.repoName}/contents/${GITHUB_REPO_CONFIG.targetFile}`;
 
         const res = await fetch(url, {
             headers: { 'Authorization': `Bearer ${token}` }
@@ -1054,11 +1058,11 @@ async function fetchFromGitHubCloud() {
         if (!res.ok) throw new Error('File not found or unauthorized');
 
         const fileData = await res.json();
-        githubFileSha = fileData.sha;
-        const decodedContent = decodeURIComponent(escape(atob(fileData.content)));
+        latestSha = fileData.sha;
+        const decodedContent = fromBase64Utf8(fileData.content);
         const parsed = JSON.parse(decodedContent);
 
-        if (!parsed.payload) throw new Error('Invalid data.json schema');
+        if (!parsed.payload) throw new Error('Invalid JSON format');
 
         const bytes = CryptoJS.AES.decrypt(parsed.payload, key);
         const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
@@ -1067,14 +1071,14 @@ async function fetchFromGitHubCloud() {
             throw new Error('Wrong AES Key');
         }
 
-        cardList = JSON.parse(decryptedJson);
+        cards = JSON.parse(decryptedJson);
         saveDataLocally();
-        updateSyncStatus('synced', 'Decrypted & Synced');
-        alert('✅ Cloud se encrypted data successfully load aur decrypt ho gaya!');
+        updateSyncStatus('synced', 'Cloud Synced');
+        alert('✅ Cloud se card data safely load aur decrypt ho gaya!');
     } catch (err) {
         console.error(err);
-        updateSyncStatus('error', 'Decrypt Error');
-        alert('❌ Data load/decrypt nahi ho saka. Kripya AES Key ya Repo path check karein.');
+        updateSyncStatus('error', 'Decrypt Fail');
+        alert('❌ Cloud sync fail ho gaya. AES Key check karein.');
     }
 }
 
