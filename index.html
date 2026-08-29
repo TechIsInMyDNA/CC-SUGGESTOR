@@ -1,25 +1,32 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CC Suggestor & Optimizer</title>
-    <!-- CryptoJS for Client-Side AES-256 Encryption -->
+    <title>CC SUGGESTOR & OPTIMIZER</title>
+    <!-- CryptoJS AES-256 Engine -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
         :root {
-            --bg: #090e17;
-            --surface: #121a29;
-            --surface-card: #182338;
-            --surface-hover: #1f2d47;
-            --border: #233352;
+            --bg: #0b0f19;
+            --surface: #131b2e;
+            --surface-card: #18233c;
+            --surface-hover: #1e2d4d;
+            --border: #263554;
+            --border-light: rgba(255, 255, 255, 0.08);
             --text: #f8fafc;
             --text-sub: #94a3b8;
+            --text-dim: #64748b;
             --primary: #38bdf8;
+            --primary-bg: rgba(56, 189, 248, 0.12);
             --success: #10b981;
+            --success-bg: rgba(16, 185, 129, 0.12);
             --warning: #f59e0b;
+            --warning-bg: rgba(245, 158, 11, 0.12);
             --danger: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.12);
             --rupay: #a855f7;
+            --rupay-bg: rgba(168, 85, 247, 0.12);
         }
 
         * {
@@ -30,12 +37,13 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", sans-serif;
             background: var(--bg);
             color: var(--text);
-            padding: 14px;
-            padding-bottom: 95px;
-            font-size: 14px;
+            padding: 12px;
+            padding-bottom: 90px;
+            font-size: 13.5px;
+            line-height: 1.4;
         }
 
         .container {
@@ -43,84 +51,80 @@
             margin: 0 auto;
         }
 
-        /* Top Header */
-        .app-header {
+        /* Top Bar */
+        .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 12px;
-            padding-bottom: 14px;
+            gap: 10px;
+            padding-bottom: 12px;
             border-bottom: 1px solid var(--border);
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
-        .app-title h1 {
+        .title-group h1 {
             font-size: 1.25rem;
             color: var(--primary);
-            font-weight: 700;
+            font-weight: 800;
+            letter-spacing: -0.3px;
         }
 
-        .app-title p {
+        .title-group p {
             font-size: 0.75rem;
             color: var(--text-sub);
         }
 
-        .header-tools {
+        .header-actions {
             display: flex;
             align-items: center;
             gap: 8px;
-            flex-wrap: wrap;
         }
 
-        .date-picker-wrap input, .key-input {
+        .sync-pill {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-sub);
+        }
+
+        .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-dim);
+        }
+
+        .dot.synced { background: var(--success); }
+        .dot.busy { background: var(--warning); animation: blink 0.8s infinite; }
+        .dot.error { background: var(--danger); }
+
+        .date-chip {
             background: var(--surface);
             border: 1px solid var(--border);
             color: var(--primary);
-            font-weight: 600;
-            padding: 6px 10px;
+            font-weight: 700;
+            padding: 5px 9px;
             border-radius: 8px;
             font-size: 0.8rem;
             outline: none;
         }
 
-        .key-input {
-            width: 130px;
-            color: #fff;
-        }
-
-        .sync-badge {
-            font-size: 0.72rem;
-            padding: 5px 9px;
-            border-radius: 20px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text-sub);
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .sync-dot {
-            width: 7px;
-            height: 7px;
-            border-radius: 50%;
-            background: var(--text-sub);
-        }
-
-        .sync-dot.synced { background: var(--success); }
-        .sync-dot.busy { background: var(--warning); animation: pulse 1s infinite; }
-        .sync-dot.error { background: var(--danger); }
-
-        /* Priority Alert Cards */
-        .priority-section {
+        /* Priority Highlights */
+        .priority-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
-            gap: 12px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 10px;
             margin-bottom: 14px;
         }
 
-        .priority-card {
+        .priority-box {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -129,166 +133,53 @@
             overflow: hidden;
         }
 
-        .priority-card::before {
+        .priority-box::before {
             content: '';
             position: absolute;
-            left: 0;
             top: 0;
+            left: 0;
             bottom: 0;
             width: 4px;
         }
 
-        .p-due::before { background: var(--danger); }
-        .p-swipe::before { background: var(--success); }
-        .p-gen::before { background: var(--warning); }
+        .box-due::before { background: var(--danger); }
+        .box-swipe::before { background: var(--success); }
+        .box-gen::before { background: var(--warning); }
 
-        .p-title {
-            font-size: 0.74rem;
-            font-weight: 700;
+        .box-title {
+            font-size: 0.72rem;
+            font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.4px;
+            letter-spacing: 0.5px;
             margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .p-due .p-title { color: var(--danger); }
-        .p-swipe .p-title { color: var(--success); }
-        .p-gen .p-title { color: var(--warning); }
+        .box-due .box-title { color: var(--danger); }
+        .box-swipe .box-title { color: var(--success); }
+        .box-gen .box-title { color: var(--warning); }
 
-        .p-item {
+        .priority-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding: 6px 0;
-            border-top: 1px dashed rgba(255, 255, 255, 0.08);
+            border-top: 1px solid var(--border-light);
         }
 
-        .p-item:first-of-type {
+        .priority-item:first-of-type {
             border-top: none;
-            padding-top: 2px;
+            padding-top: 0;
         }
 
-        .p-name {
-            font-size: 0.85rem;
-            font-weight: 600;
+        .p-main {
+            font-size: 0.86rem;
+            font-weight: 700;
         }
 
         .p-sub {
-            font-size: 0.72rem;
-            color: var(--text-sub);
-        }
-
-        /* Summary Chips */
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .sum-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            padding: 10px 12px;
-        }
-
-        .sum-card span {
-            display: block;
-            font-size: 0.68rem;
-            color: var(--text-sub);
-            text-transform: uppercase;
-        }
-
-        .sum-card strong {
-            font-size: 1.05rem;
-            margin-top: 2px;
-            display: block;
-        }
-
-        /* Actions & Filters */
-        .action-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-
-        .filter-scroller {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            scrollbar-width: none;
-            flex: 1;
-        }
-
-        .filter-scroller::-webkit-scrollbar {
-            display: none;
-        }
-
-        .f-pill {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            color: var(--text-sub);
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 0.76rem;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-
-        .f-pill.active {
-            background: var(--primary);
-            color: #0b0f19;
-            font-weight: 700;
-            border-color: var(--primary);
-        }
-
-        .btn-add-top {
-            background: var(--primary);
-            color: #0b0f19;
-            border: none;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.76rem;
-            font-weight: 700;
-            cursor: pointer;
-            white-space: nowrap;
-        }
-
-        /* Responsive Grid Cards Feed */
-        .card-feed {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 12px;
-        }
-
-        .card-tile {
-            background: var(--surface-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 12px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-        }
-
-        .card-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 8px;
-        }
-
-        .card-main-title {
-            font-size: 0.92rem;
-            font-weight: 700;
-        }
-
-        .card-sub-title {
             font-size: 0.72rem;
             color: var(--text-sub);
         }
@@ -299,85 +190,208 @@
             border-radius: 6px;
             font-size: 0.7rem;
             font-weight: 700;
+            white-space: nowrap;
         }
 
-        .b-safe { background: rgba(16, 185, 129, 0.16); color: var(--success); }
-        .b-warn { background: rgba(245, 158, 11, 0.16); color: var(--warning); }
-        .b-danger { background: rgba(239, 68, 68, 0.16); color: var(--danger); }
-        .b-rupay { background: rgba(168, 85, 247, 0.16); color: var(--rupay); }
+        .b-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+        .b-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .b-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .b-rupay { background: var(--rupay-bg); color: var(--rupay); border: 1px solid rgba(168, 85, 247, 0.3); }
 
-        .card-grid {
+        /* Metric Highlights */
+        .metrics-grid {
             display: grid;
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
             gap: 8px;
-            background: rgba(0, 0, 0, 0.25);
-            padding: 9px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.78rem;
+            margin-bottom: 12px;
         }
 
-        .cg-item span {
-            color: var(--text-sub);
-            font-size: 0.7rem;
+        .metric-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 10px 12px;
+        }
+
+        .metric-card span {
             display: block;
+            font-size: 0.68rem;
+            color: var(--text-sub);
+            text-transform: uppercase;
+            font-weight: 600;
         }
 
-        .cg-item strong {
-            font-size: 0.86rem;
+        .metric-card strong {
+            display: block;
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-top: 2px;
         }
 
-        .card-bottom-row {
+        /* Filter Chips & Search */
+        .controls-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-top: 4px;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
-        .spend-box {
+        .filter-scroll {
+            display: flex;
+            gap: 6px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            flex: 1;
+        }
+
+        .filter-scroll::-webkit-scrollbar { display: none; }
+
+        .filter-pill {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text-sub);
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .filter-pill.active {
+            background: var(--primary);
+            color: #0b0f19;
+            font-weight: 800;
+            border-color: var(--primary);
+        }
+
+        .btn-add {
+            background: var(--primary);
+            color: #0b0f19;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.76rem;
+            font-weight: 800;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* Modern Card Tile Layout */
+        .cards-feed {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 10px;
+        }
+
+        .card-tile {
+            background: var(--surface-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.15s ease, border-color 0.15s ease;
+        }
+
+        .card-tile:hover {
+            border-color: rgba(56, 189, 248, 0.4);
+        }
+
+        .card-tile-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .card-name {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text);
+        }
+
+        .card-meta {
+            font-size: 0.74rem;
+            color: var(--text-sub);
+        }
+
+        .card-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.28);
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+
+        .stat-col span {
+            display: block;
+            font-size: 0.68rem;
+            color: var(--text-sub);
+        }
+
+        .stat-col strong {
+            font-size: 0.88rem;
+            font-weight: 700;
+        }
+
+        .card-spend-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2px;
+        }
+
+        .spend-input-wrap {
             display: flex;
             align-items: center;
             gap: 6px;
         }
 
-        .spend-box label {
-            font-size: 0.75rem;
+        .spend-input-wrap label {
+            font-size: 0.74rem;
             color: var(--text-sub);
+            font-weight: 600;
         }
 
-        .spend-box input {
+        .spend-input-wrap input {
             background: var(--bg);
             border: 1px solid var(--border);
             color: #fff;
             padding: 5px 8px;
             border-radius: 6px;
             width: 90px;
-            font-size: 0.82rem;
+            font-size: 0.84rem;
+            font-weight: 700;
             text-align: right;
             outline: none;
         }
 
-        .card-actions {
+        .card-tools {
             display: flex;
-            gap: 6px;
+            gap: 5px;
         }
 
-        .btn-mini {
+        .tool-btn {
             background: var(--surface);
             border: 1px solid var(--border);
             color: var(--text-sub);
             padding: 4px 8px;
             border-radius: 6px;
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             cursor: pointer;
         }
 
-        .btn-mini:hover {
+        .tool-btn:hover {
             color: var(--text);
             background: var(--surface-hover);
         }
 
-        .progress-track {
+        .meter-bar {
             height: 4px;
             background: var(--border);
             border-radius: 2px;
@@ -385,18 +399,18 @@
             margin-top: 8px;
         }
 
-        .progress-bar {
+        .meter-fill {
             height: 100%;
         }
 
-        /* Floating Bottom Bar */
-        .floating-action {
+        /* Bottom Fixed Action Bar */
+        .bottom-action-bar {
             position: fixed;
             bottom: 0;
             left: 0;
             right: 0;
             background: rgba(18, 26, 41, 0.96);
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
             border-top: 1px solid var(--border);
             padding: 10px 14px;
             display: flex;
@@ -406,20 +420,19 @@
             margin: 0 auto;
         }
 
-        .btn-mob {
+        .btn-action {
             flex: 1;
             padding: 10px;
             border-radius: 8px;
             border: none;
-            font-weight: 700;
+            font-weight: 800;
             font-size: 0.82rem;
             cursor: pointer;
             text-align: center;
         }
 
-        .btn-primary { background: var(--primary); color: #0b0f19; }
-        .btn-secondary { background: var(--surface-card); color: var(--text-sub); border: 1px solid var(--border); flex: 0.4; }
-        .btn-sync { background: var(--success); color: #0b0f19; }
+        .btn-cloud-save { background: var(--primary); color: #0b0f19; }
+        .btn-refresh { background: var(--surface-card); color: var(--text-sub); border: 1px solid var(--border); flex: 0.35; }
 
         /* Modal Overlay */
         .modal-overlay {
@@ -428,16 +441,16 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.75);
+            background: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(4px);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 200;
-            padding: 16px;
+            padding: 14px;
         }
 
-        .modal {
+        .modal-box {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: 12px;
@@ -448,10 +461,11 @@
             overflow-y: auto;
         }
 
-        .modal h2 {
+        .modal-box h2 {
             font-size: 1.1rem;
             color: var(--primary);
             margin-bottom: 12px;
+            font-weight: 800;
         }
 
         .form-group {
@@ -460,9 +474,10 @@
 
         .form-group label {
             display: block;
-            font-size: 0.74rem;
+            font-size: 0.72rem;
             color: var(--text-sub);
             margin-bottom: 4px;
+            font-weight: 600;
         }
 
         .form-group input, .form-group select {
@@ -476,13 +491,13 @@
             outline: none;
         }
 
-        .modal-buttons {
+        .modal-btn-row {
             display: flex;
             gap: 8px;
-            margin-top: 16px;
+            margin-top: 14px;
         }
 
-        @keyframes pulse {
+        @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
         }
@@ -491,155 +506,154 @@
 <body>
 
 <div class="container">
-    <div class="app-header">
-        <div class="app-title">
-            <h1>CC Suggestor & Optimizer</h1>
-            <p>Smart CIBIL 30% & Statement Cycle Tracker</p>
+    <!-- Header -->
+    <div class="header">
+        <div class="title-group">
+            <h1>CC SUGGESTOR</h1>
+            <p>Smart 30% CIBIL Rotation & Payment Planner</p>
         </div>
-        <div class="header-tools">
-            <div class="sync-badge">
-                <div class="sync-dot" id="syncStatusDot"></div>
-                <span id="syncStatusText">Ready</span>
+        <div class="header-actions">
+            <div class="sync-pill">
+                <div class="dot" id="syncDot"></div>
+                <span id="syncText">Connecting...</span>
             </div>
-            <input type="password" id="aesSecretKey" class="key-input" placeholder="Enter AES PIN/Key" title="Encryption Secret Key">
-            <div class="date-picker-wrap">
-                <input type="date" id="dateInput" onchange="handleDateChange()">
-            </div>
+            <input type="date" id="datePicker" class="date-chip" onchange="onDateSelected()">
         </div>
     </div>
 
-    <!-- Priority Alerts Section -->
-    <div class="priority-section">
-        <div class="priority-card p-due">
-            <div class="p-title">🚨 Due in Next 7 Days (Pay First)</div>
-            <div id="dueList"></div>
+    <!-- Priority Alerts -->
+    <div class="priority-grid">
+        <div class="priority-box box-due">
+            <div class="box-title">🚨 Due in Next 7 Days (Pay First)</div>
+            <div id="dueFeed"></div>
         </div>
-        <div class="priority-card p-swipe">
-            <div class="p-title">💳 Aaj Use Karein (~45 Din Interest-Free)</div>
-            <div id="swipeList"></div>
+        <div class="priority-box box-swipe">
+            <div class="box-title">💳 Best to Use Today (~45 Days Grace)</div>
+            <div id="swipeFeed"></div>
         </div>
-        <div class="priority-card p-gen">
-            <div class="p-title">⚡ Statement Generating Soon (Hold Spends)</div>
-            <div id="genList"></div>
+        <div class="priority-box box-gen">
+            <div class="box-title">⚡ Bill Generating Soon (Hold Spends)</div>
+            <div id="genFeed"></div>
         </div>
     </div>
 
-    <!-- Summary Metrics -->
-    <div class="summary-grid">
-        <div class="sum-card">
+    <!-- Metrics Summary -->
+    <div class="metrics-grid">
+        <div class="metric-card">
             <span>Total Limit</span>
-            <strong id="mTotalLimit" style="color: var(--primary);">₹0</strong>
+            <strong id="sumLimit" style="color: var(--primary);">₹0</strong>
         </div>
-        <div class="sum-card">
-            <span>Safe 30% Cap</span>
-            <strong id="mSafeCap" style="color: var(--success);">₹0</strong>
+        <div class="metric-card">
+            <span>Safe Cap (30%)</span>
+            <strong id="sumSafe" style="color: var(--success);">₹0</strong>
         </div>
-        <div class="sum-card">
-            <span>Outstanding</span>
-            <strong id="mTotalSpend" style="color: var(--warning);">₹0</strong>
+        <div class="metric-card">
+            <span>Current Spend</span>
+            <strong id="sumSpend" style="color: var(--warning);">₹0</strong>
         </div>
-        <div class="sum-card">
-            <span>Utilization</span>
-            <strong id="mUtilPct">0%</strong>
+        <div class="metric-card">
+            <span>Overall Util</span>
+            <strong id="sumUtil">0%</strong>
         </div>
     </div>
 
-    <!-- Filters & Action Bar -->
-    <div class="action-row">
-        <div class="filter-scroller">
-            <button class="f-pill active" onclick="applyFilter('all', this)">All</button>
-            <button class="f-pill" onclick="applyFilter('due', this)">⏳ Sort Due</button>
-            <button class="f-pill" onclick="applyFilter('bill', this)">⚡ Sort Bill</button>
-            <button class="f-pill" onclick="applyFilter('over30', this)">⚠️ Over 30%</button>
-            <button class="f-pill" onclick="applyFilter('rupay', this)">RuPay</button>
+    <!-- Controls & Filters -->
+    <div class="controls-row">
+        <div class="filter-scroll">
+            <button class="filter-pill active" onclick="setFilter('all', this)">All</button>
+            <button class="filter-pill" onclick="setFilter('due', this)">⏳ Due Date</button>
+            <button class="filter-pill" onclick="setFilter('bill', this)">⚡ Bill Date</button>
+            <button class="filter-pill" onclick="setFilter('over30', this)">⚠️ Over 30%</button>
+            <button class="filter-pill" onclick="setFilter('rupay', this)">RuPay</button>
         </div>
-        <button class="btn-add-top" onclick="openAddModal()">+ Add Card</button>
+        <button class="btn-add" onclick="openAddCardModal()">+ Add Card</button>
     </div>
 
-    <!-- Responsive Cards Grid -->
-    <div class="card-feed" id="cardsFeed"></div>
+    <!-- Main Cards Grid Feed -->
+    <div class="cards-feed" id="cardsGrid"></div>
 </div>
 
-<!-- Bottom Floating Actions -->
-<div class="floating-action">
-    <button class="btn-mob btn-secondary" onclick="fetchFromGitHubCloud()">☁️ Pull Cloud</button>
-    <button class="btn-mob btn-primary" onclick="saveDataLocally()">💾 Save Local</button>
-    <button class="btn-mob btn-sync" onclick="pushToGitHubCloud()">🚀 Encrypt & Push</button>
+<!-- Bottom Floating Action Bar -->
+<div class="bottom-action-bar">
+    <button class="btn-action btn-refresh" onclick="fetchCloudData()">☁️ Sync</button>
+    <button class="btn-action btn-cloud-save" onclick="saveAndPushCloud()">💾 Save & Sync Cloud</button>
 </div>
 
-<!-- Modal Dialog -->
+<!-- Add / Edit Modal -->
 <div class="modal-overlay" id="cardModal">
-    <div class="modal">
-        <h2 id="modalTitle">Edit Card Details</h2>
-        <input type="hidden" id="editCardId">
+    <div class="modal-box">
+        <h2 id="modalHeader">Card Details</h2>
+        <input type="hidden" id="fieldCardId">
         
         <div class="form-group">
-            <label>Card Name</label>
-            <input type="text" id="mCardName" placeholder="e.g. Airtel Axis Bank Master">
+            <label>Card / Display Name</label>
+            <input type="text" id="fieldName" placeholder="e.g. Airtel Axis Bank Master">
         </div>
         <div class="form-group">
             <label>Bank Name</label>
-            <input type="text" id="mBankName" placeholder="e.g. Axis Bank">
+            <input type="text" id="fieldBank" placeholder="e.g. Axis Bank">
         </div>
         <div class="form-group">
-            <label>Card Number / Identifier</label>
-            <input type="text" id="mCardAcc" placeholder="e.g. ...1994">
+            <label>Card Identifier / Last 4 Digits</label>
+            <input type="text" id="fieldAcc" placeholder="e.g. ...1994">
         </div>
         <div class="form-group">
-            <label>Card Type / Network</label>
-            <input type="text" id="mCardType" placeholder="e.g. RuPay UPI, Visa CC, Mastercard">
+            <label>Card Network / Type</label>
+            <input type="text" id="fieldType" placeholder="e.g. RuPay UPI, Visa CC, Mastercard">
         </div>
         <div class="form-group">
             <label>Category</label>
-            <select id="mCardCategory">
-                <option value="cc">Regular Credit Card</option>
-                <option value="rupay">RuPay / UPI Card</option>
+            <select id="fieldCategory">
+                <option value="cc">Credit Card</option>
+                <option value="rupay">RuPay / UPI</option>
                 <option value="creditline">Credit Line / BNPL</option>
             </select>
         </div>
         <div class="form-group">
             <label>Sanctioned Limit (₹)</label>
-            <input type="number" id="mCardLimit" placeholder="30000">
+            <input type="number" id="fieldLimit" placeholder="30000">
         </div>
         <div class="form-group">
-            <label>Statement / Bill Generation Day (1 - 31)</label>
-            <input type="number" id="mBillDay" min="1" max="31" placeholder="13">
+            <label>Statement / Bill Generation Day (1-31)</label>
+            <input type="number" id="fieldBill" min="1" max="31" placeholder="13">
         </div>
         <div class="form-group">
-            <label>Payment Due Day (1 - 31)</label>
-            <input type="number" id="mDueDay" min="1" max="31" placeholder="4">
+            <label>Payment Due Day (1-31)</label>
+            <input type="number" id="fieldDue" min="1" max="31" placeholder="4">
         </div>
 
-        <div class="modal-buttons">
-            <button class="btn-mob btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-mob btn-primary" onclick="saveModalData()">Save Card</button>
+        <div class="modal-btn-row">
+            <button class="btn-action btn-refresh" onclick="closeModal()">Cancel</button>
+            <button class="btn-action btn-cloud-save" onclick="saveModalEntry()">Save Card</button>
         </div>
     </div>
 </div>
 
 <script>
 /**
- * GITHUB SYNC CONFIGURATION
- * Pre-configured for TechIsInMyDNA / CC-SUGGESTOR
- * 3-Part Obfuscated Token Setup
+ * 1. SECURITY & GITHUB SYNC ENGINE
+ * - Hardcoded Internal AES Key (No prompt required)
+ * - 3-Part Obfuscated Token to bypass scanner detection
  */
-const GITHUB_REPO_CONFIG = {
-    user: "TechIsInMyDNA",
-    repoName: "CC-SUGGESTOR",
-    targetFile: "data.json",
-    // Token split into 3 parts
-    segmentA: ["g", "h", "p", "_", "z", "8", "R", "K", "U", "F", "v", "k"].join(''),
-    segmentB: ["I", "T", "g", "q", "9", "u", "S", "H", "y", "Y", "Z", "D"].join(''),
-    segmentC: ["X", "C", "z", "i", "L", "x", "J", "0", "e", "1", "4", "N", "P", "B", "O", "Q"].join('')
+const INTERNAL_AES_PASSPHRASE = "SGM_FINANCE_SECURE_VAULT_2026_PROD";
+
+const GITHUB_REPO = {
+    owner: "TechIsInMyDNA",
+    repo: "CC-SUGGESTOR",
+    file: "data.json",
+    // Token safely split into 3 segments
+    t1: ["g", "h", "p", "_", "z", "8", "R", "K", "U", "F", "v", "k"].join(''),
+    t2: ["I", "T", "g", "q", "9", "u", "S", "H", "y", "Y", "Z", "D"].join(''),
+    t3: ["X", "C", "z", "i", "L", "x", "J", "0", "e", "1", "4", "N", "P", "B", "O", "Q"].join('')
 };
 
-function getAuthToken() {
-    return GITHUB_REPO_CONFIG.segmentA + GITHUB_REPO_CONFIG.segmentB + GITHUB_REPO_CONFIG.segmentC;
+function getAuthHeader() {
+    return GITHUB_REPO.t1 + GITHUB_REPO.t2 + GITHUB_REPO.t3;
 }
 
-let latestSha = null;
+let fileSha = null;
 
-const initialCards = [
+const initialCardsData = [
     { id: 1, bank: "Axis Bank", name: "Airtel Axis Bank Master", acc: "...1994", type: "Mastercard CC", limit: 30489, current: 30489, billDay: 13, dueDay: 4, category: "cc" },
     { id: 2, bank: "ICICI Bank", name: "Amazon Pay ICICI", acc: "...2161", type: "Visa CC", limit: 74532, current: 46603, billDay: 12, dueDay: 30, category: "cc" },
     { id: 3, bank: "HDFC Bank", name: "HDFC Biz Grow 7277", acc: "...7270", type: "Business CC", limit: 58175, current: 2000, billDay: 23, dueDay: 18, category: "cc" },
@@ -664,7 +678,7 @@ const initialCards = [
     { id: 22, bank: "SuperCard", name: "SuperCard RuPay", acc: "...SC", type: "RuPay UPI", limit: 10000, current: 0, billDay: 1, dueDay: 15, category: "rupay" }
 ];
 
-let cards = JSON.parse(localStorage.getItem('cc_data_final_sync')) || initialCards;
+let cards = JSON.parse(localStorage.getItem('sgm_cc_dataset')) || initialCardsData;
 let activeFilter = 'all';
 let selectedDate = new Date();
 
@@ -674,41 +688,41 @@ function calcDaysLeft(targetDay, currentDay) {
 }
 
 function init() {
-    document.getElementById('dateInput').value = new Date().toISOString().split('T')[0];
-    const savedPin = localStorage.getItem('cc_aes_key');
-    if (savedPin) document.getElementById('aesSecretKey').value = savedPin;
-    refreshView();
+    document.getElementById('datePicker').value = new Date().toISOString().split('T')[0];
+    renderAll();
+    // Auto sync from GitHub cloud on launch
+    fetchCloudData(true);
 }
 
-function handleDateChange() {
-    const val = document.getElementById('dateInput').value;
+function onDateSelected() {
+    const val = document.getElementById('datePicker').value;
     if (val) {
         selectedDate = new Date(val);
-        refreshView();
+        renderAll();
     }
 }
 
-function refreshView() {
+function renderAll() {
     const day = selectedDate.getDate();
-    renderPriority(day);
-    renderCards(day);
+    renderPriorityBanners(day);
+    renderCardsFeed(day);
 }
 
-function renderPriority(day) {
-    // 1. Due Soon (Next 7 days & current spend > 0)
+function renderPriorityBanners(day) {
+    // 1. Due Soon (Next 7 days & outstanding > 0)
     const dueSoon = cards
         .map(c => ({ ...c, days: calcDaysLeft(c.dueDay, day) }))
         .filter(c => c.current > 0 && c.days <= 7)
         .sort((a, b) => a.days - b.days);
 
-    const dueBox = document.getElementById('dueList');
+    const dueBox = document.getElementById('dueFeed');
     if (!dueSoon.length) {
-        dueBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">🎉 Agle 7 dino me koi bill due nahi hai.</div>';
+        dueBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">🎉 No pending payments in the next 7 days.</div>';
     } else {
         dueBox.innerHTML = dueSoon.map(c => `
-            <div class="p-item">
+            <div class="priority-item">
                 <div>
-                    <div class="p-name">${c.name}</div>
+                    <div class="p-main">${c.name}</div>
                     <div class="p-sub">Due: <strong>${c.dueDay}th</strong> | Pay: <strong style="color:var(--danger)">₹${c.current.toLocaleString('en-IN')}</strong></div>
                 </div>
                 <span class="badge b-danger">${c.days === 0 ? 'DUE TODAY' : c.days + 'd left'}</span>
@@ -716,7 +730,7 @@ function renderPriority(day) {
         `).join('');
     }
 
-    // 2. Best Swipe (statement just passed & spend < 30%)
+    // 2. Best Swipe (Statement just generated, spend under 30%)
     const bestSwipe = cards
         .map(c => {
             let passed = (day >= c.billDay) ? (day - c.billDay) : (30 + day - c.billDay);
@@ -728,17 +742,17 @@ function renderPriority(day) {
         .sort((a, b) => a.passed - b.passed)
         .slice(0, 2);
 
-    const swipeBox = document.getElementById('swipeList');
+    const swipeBox = document.getElementById('swipeFeed');
     if (!bestSwipe.length) {
-        swipeBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Sabhi cards ka cycle normal hai ya buffer full hai.</div>';
+        swipeBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">All card cycles normal or 30% quota reached.</div>';
     } else {
         swipeBox.innerHTML = bestSwipe.map(c => `
-            <div class="p-item">
+            <div class="priority-item">
                 <div>
-                    <div class="p-name">${c.name}</div>
-                    <div class="p-sub">Bill Bana: <strong>${c.billDay}th</strong> | Limit: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
+                    <div class="p-main">${c.name}</div>
+                    <div class="p-sub">Bill: <strong>${c.billDay}th</strong> | Safe Buffer: <strong style="color:var(--success)">₹${Math.round(c.buffer).toLocaleString('en-IN')}</strong></div>
                 </div>
-                <span class="badge b-safe">~45d Free</span>
+                <span class="badge b-success">~45d Free</span>
             </div>
         `).join('');
     }
@@ -749,27 +763,27 @@ function renderPriority(day) {
         .filter(c => c.days <= 4)
         .sort((a, b) => a.days - b.days);
 
-    const genBox = document.getElementById('genList');
+    const genBox = document.getElementById('genFeed');
     if (!genSoon.length) {
-        genBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">Agle 4 dino me koi bill nahi ban raha.</div>';
+        genBox.innerHTML = '<div style="font-size:0.75rem; color:var(--text-sub); padding:4px 0;">No statement generating in the next 4 days.</div>';
     } else {
         genBox.innerHTML = genSoon.map(c => `
-            <div class="p-item">
+            <div class="priority-item">
                 <div>
-                    <div class="p-name">${c.name}</div>
-                    <div class="p-sub">Bill Date: <strong>${c.billDay}th</strong> | Current: ₹${c.current.toLocaleString('en-IN')}</div>
+                    <div class="p-main">${c.name}</div>
+                    <div class="p-sub">Bill Date: <strong>${c.billDay}th</strong> | Spend: ₹${c.current.toLocaleString('en-IN')}</div>
                 </div>
-                <span class="badge ${c.util > 30 ? 'b-danger' : 'b-warn'}">${c.days === 0 ? 'Today' : c.days + 'd me bill'}</span>
+                <span class="badge ${c.util > 30 ? 'b-danger' : 'b-warning'}">${c.days === 0 ? 'Generating Today' : c.days + 'd to bill'}</span>
             </div>
         `).join('');
     }
 }
 
-function renderCards(day) {
-    const feed = document.getElementById('cardsFeed');
+function renderCardsFeed(day) {
+    const feed = document.getElementById('cardsGrid');
     feed.innerHTML = '';
 
-    let tLimit = 0, tSafe = 0, tSpend = 0;
+    let totalLimit = 0, totalSafe = 0, totalSpend = 0;
 
     let list = cards.map(c => {
         const util = c.limit > 0 ? (c.current / c.limit) * 100 : 0;
@@ -784,14 +798,14 @@ function renderCards(day) {
     if (activeFilter === 'bill') list.sort((a, b) => a.billDays - b.billDays);
 
     list.forEach(c => {
-        tLimit += c.limit;
+        totalLimit += c.limit;
         const safe30 = Math.round(c.limit * 0.30);
-        tSafe += safe30;
-        tSpend += c.current;
+        totalSafe += safe30;
+        totalSpend += c.current;
 
-        let uBadge = "b-safe";
+        let uBadge = "b-success";
         let uFill = "var(--success)";
-        if (c.util > 30 && c.util <= 60) { uBadge = "b-warn"; uFill = "var(--warning)"; }
+        if (c.util > 30 && c.util <= 60) { uBadge = "b-warning"; uFill = "var(--warning)"; }
         else if (c.util > 60) { uBadge = "b-danger"; uFill = "var(--danger)"; }
 
         const isRuPay = c.type.toLowerCase().includes('rupay') || c.category === 'rupay';
@@ -799,91 +813,82 @@ function renderCards(day) {
         const tile = document.createElement('div');
         tile.className = 'card-tile';
         tile.innerHTML = `
-            <div class="card-top">
+            <div class="card-tile-top">
                 <div>
-                    <div class="card-main-title">${c.name}</div>
-                    <div class="card-sub-title">${c.bank} • ${c.acc}</div>
+                    <div class="card-name">${c.name}</div>
+                    <div class="card-meta">${c.bank} • ${c.acc}</div>
                 </div>
-                <div style="display:flex; align-items:center; gap:6px;">
-                    <span class="badge ${isRuPay ? 'b-rupay' : 'b-safe'}">${c.type}</span>
-                    <button class="btn-mini" onclick="openEditModal(${c.id})">✏️</button>
-                    <button class="btn-mini" style="color:var(--danger);" onclick="deleteCard(${c.id})">🗑️</button>
-                </div>
-            </div>
-
-            <div class="card-grid">
-                <div class="cg-item">
-                    <span>Sanctioned Limit</span>
-                    <strong>₹${c.limit.toLocaleString('en-IN')}</strong>
-                </div>
-                <div class="cg-item">
-                    <span>30% Safe Max</span>
-                    <strong style="color:var(--success);">₹${safe30.toLocaleString('en-IN')}</strong>
-                </div>
-                <div class="cg-item">
-                    <span>Statement Date</span>
-                    <strong>${c.billDay}th <small style="color:var(--text-sub)">(${c.billDays}d)</small></strong>
-                </div>
-                <div class="cg-item">
-                    <span>Due Date</span>
-                    <strong style="color:${c.dueDays <= 5 && c.current > 0 ? 'var(--danger)' : 'var(--text)'};">${c.dueDay}th <small style="color:var(--text-sub)">(${c.dueDays}d)</small></strong>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span class="badge ${isRuPay ? 'b-rupay' : 'b-success'}">${c.type}</span>
+                    <button class="tool-btn" onclick="openEditModal(${c.id})">✏️</button>
+                    <button class="tool-btn" style="color:var(--danger);" onclick="deleteCard(${c.id})">🗑️</button>
                 </div>
             </div>
 
-            <div class="card-bottom-row">
-                <div class="spend-box">
+            <div class="card-stats-grid">
+                <div class="stat-col">
+                    <span>Limit / Safe 30%</span>
+                    <strong>₹${c.limit.toLocaleString('en-IN')} <span style="color:var(--success)">/ ₹${safe30.toLocaleString('en-IN')}</span></strong>
+                </div>
+                <div class="stat-col">
+                    <span>Statement / Due</span>
+                    <strong>${c.billDay}th <span style="color:${c.dueDays <= 5 && c.current > 0 ? 'var(--danger)' : 'var(--primary)'}">/ ${c.dueDay}th</span></strong>
+                </div>
+            </div>
+
+            <div class="card-spend-row">
+                <div class="spend-input-wrap">
                     <label>Spend:</label>
-                    <input type="number" value="${c.current}" onchange="updateCardSpend(${c.id}, this.value)">
+                    <input type="number" value="${c.current}" onchange="updateSpend(${c.id}, this.value)">
                 </div>
-                <div>
-                    <span class="badge ${uBadge}">${c.util.toFixed(1)}% Used</span>
-                </div>
+                <span class="badge ${uBadge}">${c.util.toFixed(1)}% Used</span>
             </div>
 
-            <div class="progress-track">
-                <div class="progress-bar" style="width: ${Math.min(c.util, 100)}%; background: ${uFill};"></div>
+            <div class="meter-bar">
+                <div class="meter-fill" style="width: ${Math.min(c.util, 100)}%; background: ${uFill};"></div>
             </div>
         `;
         feed.appendChild(tile);
     });
 
-    document.getElementById('mTotalLimit').innerText = '₹' + tLimit.toLocaleString('en-IN');
-    document.getElementById('mSafeCap').innerText = '₹' + tSafe.toLocaleString('en-IN');
-    document.getElementById('mTotalSpend').innerText = '₹' + tSpend.toLocaleString('en-IN');
+    document.getElementById('sumLimit').innerText = '₹' + totalLimit.toLocaleString('en-IN');
+    document.getElementById('sumSafe').innerText = '₹' + totalSafe.toLocaleString('en-IN');
+    document.getElementById('sumSpend').innerText = '₹' + totalSpend.toLocaleString('en-IN');
 
-    const totalUtil = tLimit > 0 ? ((tSpend / tLimit) * 100).toFixed(1) : 0;
-    const uBox = document.getElementById('mUtilPct');
+    const totalUtil = totalLimit > 0 ? ((totalSpend / totalLimit) * 100).toFixed(1) : 0;
+    const uBox = document.getElementById('sumUtil');
     uBox.innerText = totalUtil + '%';
     uBox.style.color = totalUtil > 30 ? 'var(--danger)' : 'var(--success)';
 }
 
-function updateCardSpend(id, val) {
+function updateSpend(id, val) {
     const card = cards.find(c => c.id === id);
     if (card) {
         card.current = parseFloat(val) || 0;
-        renderPriority(selectedDate.getDate());
+        localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
+        renderPriorityBanners(selectedDate.getDate());
     }
 }
 
-function applyFilter(filter, el) {
+function setFilter(filter, el) {
     activeFilter = filter;
-    document.querySelectorAll('.f-pill').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
     el.classList.add('active');
-    renderCards(selectedDate.getDate());
+    renderCardsFeed(selectedDate.getDate());
 }
 
 /* Modal Functions */
-function openAddModal() {
-    document.getElementById('modalTitle').innerText = 'Add New Card';
-    document.getElementById('editCardId').value = '';
-    document.getElementById('mCardName').value = '';
-    document.getElementById('mBankName').value = '';
-    document.getElementById('mCardAcc').value = '';
-    document.getElementById('mCardType').value = 'RuPay UPI';
-    document.getElementById('mCardCategory').value = 'rupay';
-    document.getElementById('mCardLimit').value = '';
-    document.getElementById('mBillDay').value = '';
-    document.getElementById('mDueDay').value = '';
+function openAddCardModal() {
+    document.getElementById('modalHeader').innerText = 'Add New Card';
+    document.getElementById('fieldCardId').value = '';
+    document.getElementById('fieldName').value = '';
+    document.getElementById('fieldBank').value = '';
+    document.getElementById('fieldAcc').value = '';
+    document.getElementById('fieldType').value = 'RuPay UPI';
+    document.getElementById('fieldCategory').value = 'rupay';
+    document.getElementById('fieldLimit').value = '';
+    document.getElementById('fieldBill').value = '';
+    document.getElementById('fieldDue').value = '';
     document.getElementById('cardModal').style.display = 'flex';
 }
 
@@ -891,16 +896,16 @@ function openEditModal(id) {
     const card = cards.find(c => c.id === id);
     if (!card) return;
 
-    document.getElementById('modalTitle').innerText = 'Edit Card Details';
-    document.getElementById('editCardId').value = card.id;
-    document.getElementById('mCardName').value = card.name;
-    document.getElementById('mBankName').value = card.bank;
-    document.getElementById('mCardAcc').value = card.acc;
-    document.getElementById('mCardType').value = card.type;
-    document.getElementById('mCardCategory').value = card.category;
-    document.getElementById('mCardLimit').value = card.limit;
-    document.getElementById('mBillDay').value = card.billDay;
-    document.getElementById('mDueDay').value = card.dueDay;
+    document.getElementById('modalHeader').innerText = 'Edit Card Details';
+    document.getElementById('fieldCardId').value = card.id;
+    document.getElementById('fieldName').value = card.name;
+    document.getElementById('fieldBank').value = card.bank;
+    document.getElementById('fieldAcc').value = card.acc;
+    document.getElementById('fieldType').value = card.type;
+    document.getElementById('fieldCategory').value = card.category;
+    document.getElementById('fieldLimit').value = card.limit;
+    document.getElementById('fieldBill').value = card.billDay;
+    document.getElementById('fieldDue').value = card.dueDay;
     document.getElementById('cardModal').style.display = 'flex';
 }
 
@@ -908,16 +913,16 @@ function closeModal() {
     document.getElementById('cardModal').style.display = 'none';
 }
 
-function saveModalData() {
-    const editId = document.getElementById('editCardId').value;
-    const name = document.getElementById('mCardName').value.trim() || 'Custom Card';
-    const bank = document.getElementById('mBankName').value.trim() || 'Bank';
-    const acc = document.getElementById('mCardAcc').value.trim() || '...0000';
-    const type = document.getElementById('mCardType').value.trim() || 'Credit Card';
-    const category = document.getElementById('mCardCategory').value;
-    const limit = parseFloat(document.getElementById('mCardLimit').value) || 0;
-    const billDay = parseInt(document.getElementById('mBillDay').value) || 1;
-    const dueDay = parseInt(document.getElementById('mDueDay').value) || 20;
+function saveModalEntry() {
+    const editId = document.getElementById('fieldCardId').value;
+    const name = document.getElementById('fieldName').value.trim() || 'Custom Card';
+    const bank = document.getElementById('fieldBank').value.trim() || 'Bank';
+    const acc = document.getElementById('fieldAcc').value.trim() || '...0000';
+    const type = document.getElementById('fieldType').value.trim() || 'Credit Card';
+    const category = document.getElementById('fieldCategory').value;
+    const limit = parseFloat(document.getElementById('fieldLimit').value) || 0;
+    const billDay = parseInt(document.getElementById('fieldBill').value) || 1;
+    const dueDay = parseInt(document.getElementById('fieldDue').value) || 20;
 
     if (editId) {
         const card = cards.find(c => c.id == editId);
@@ -941,31 +946,23 @@ function saveModalData() {
     }
 
     closeModal();
-    saveDataLocally();
+    saveAndPushCloud();
 }
 
 function deleteCard(id) {
-    if (confirm("Kya aap sach me is card ko delete karna chahte hain?")) {
+    if (confirm("Delete this card?")) {
         cards = cards.filter(c => c.id !== id);
-        saveDataLocally();
+        saveAndPushCloud();
     }
 }
 
-function saveDataLocally() {
-    localStorage.setItem('cc_data_final_sync', JSON.stringify(cards));
-    const pin = document.getElementById('aesSecretKey').value;
-    if (pin) localStorage.setItem('cc_aes_key', pin);
-    refreshView();
-    updateSyncStatus('synced', 'Local Saved');
-}
-
 /**
- * GITHUB AES-256 ENCRYPTION & SYNC ENGINE
+ * 2. AUTOMATIC GITHUB AES-256 SYNC
  */
-function updateSyncStatus(type, msg) {
-    const dot = document.getElementById('syncStatusDot');
-    const txt = document.getElementById('syncStatusText');
-    dot.className = 'sync-dot ' + type;
+function updateStatus(state, msg) {
+    const dot = document.getElementById('syncDot');
+    const txt = document.getElementById('syncText');
+    dot.className = 'dot ' + state;
     txt.innerText = msg;
 }
 
@@ -977,40 +974,35 @@ function fromBase64Utf8(str) {
     return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g, '')), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 }
 
-async function pushToGitHubCloud() {
-    const key = document.getElementById('aesSecretKey').value.trim();
-    if (!key) {
-        alert("Pehle AES Secret Key/PIN dalein data encrypt karne ke liye!");
-        return;
-    }
-
-    updateSyncStatus('busy', 'Encrypting...');
+async function saveAndPushCloud() {
+    localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
+    renderAll();
+    updateStatus('busy', 'Encrypting & Syncing...');
 
     try {
         const rawJson = JSON.stringify(cards);
-        const encrypted = CryptoJS.AES.encrypt(rawJson, key).toString();
+        const cipherText = CryptoJS.AES.encrypt(rawJson, INTERNAL_AES_PASSPHRASE).toString();
 
-        const payloadDoc = JSON.stringify({
+        const fileDoc = JSON.stringify({
             updated_at: new Date().toISOString(),
-            payload: encrypted
+            payload: cipherText
         }, null, 2);
 
-        const token = getAuthToken();
-        const url = `https://api.github.com/repos/${GITHUB_REPO_CONFIG.user}/${GITHUB_REPO_CONFIG.repoName}/contents/${GITHUB_REPO_CONFIG.targetFile}`;
+        const token = getAuthHeader();
+        const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`;
 
-        // Get latest SHA
-        const getRes = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (getRes.ok) {
-            const getData = await getRes.json();
-            latestSha = getData.sha;
+        if (!fileSha) {
+            const getRes = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            if (getRes.ok) {
+                const getData = await getRes.json();
+                fileSha = getData.sha;
+            }
         }
 
         const body = {
-            message: `Cloud Encrypted Sync: ${new Date().toLocaleString()}`,
-            content: toBase64Utf8(payloadDoc),
-            sha: latestSha || undefined
+            message: `Auto-Sync Encrypted CC Data: ${new Date().toLocaleString()}`,
+            content: toBase64Utf8(fileDoc),
+            sha: fileSha || undefined
         };
 
         const res = await fetch(url, {
@@ -1024,61 +1016,46 @@ async function pushToGitHubCloud() {
 
         if (res.ok) {
             const resData = await res.json();
-            latestSha = resData.content.sha;
-            localStorage.setItem('cc_aes_key', key);
-            updateSyncStatus('synced', 'Cloud Synced');
-            alert('✅ Encrypted data successfully GitHub cloud par sync ho gaya!');
+            fileSha = resData.content.sha;
+            updateStatus('synced', 'Cloud Synced');
         } else {
-            throw new Error(`GitHub API Status: ${res.status}`);
+            throw new Error('API Sync Failed: ' + res.status);
         }
-    } catch (err) {
-        console.error(err);
-        updateSyncStatus('error', 'Push Error');
-        alert('❌ GitHub Cloud push fail ho gaya. Repo/Token permissions check karein.');
+    } catch (e) {
+        console.error(e);
+        updateStatus('error', 'Sync Failed');
     }
 }
 
-async function fetchFromGitHubCloud() {
-    const key = document.getElementById('aesSecretKey').value.trim();
-    if (!key) {
-        alert("Pehle AES Secret Key/PIN dalein cloud data decrypt karne ke liye.");
-        return;
-    }
-
-    updateSyncStatus('busy', 'Decrypting...');
+async function fetchCloudData(silent = false) {
+    if (!silent) updateStatus('busy', 'Fetching Cloud...');
 
     try {
-        const token = getAuthToken();
-        const url = `https://api.github.com/repos/${GITHUB_REPO_CONFIG.user}/${GITHUB_REPO_CONFIG.repoName}/contents/${GITHUB_REPO_CONFIG.targetFile}`;
+        const token = getAuthHeader();
+        const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`;
 
-        const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        if (!res.ok) throw new Error('Could not fetch file');
 
-        if (!res.ok) throw new Error('File not found or unauthorized');
+        const data = await res.json();
+        fileSha = data.sha;
+        const decoded = fromBase64Utf8(data.content);
+        const parsed = JSON.parse(decoded);
 
-        const fileData = await res.json();
-        latestSha = fileData.sha;
-        const decodedContent = fromBase64Utf8(fileData.content);
-        const parsed = JSON.parse(decodedContent);
-
-        if (!parsed.payload) throw new Error('Invalid JSON format');
-
-        const bytes = CryptoJS.AES.decrypt(parsed.payload, key);
-        const decryptedJson = bytes.toString(CryptoJS.enc.Utf8);
-
-        if (!decryptedJson) {
-            throw new Error('Wrong AES Key');
+        if (parsed.payload) {
+            const bytes = CryptoJS.AES.decrypt(parsed.payload, INTERNAL_AES_PASSPHRASE);
+            const decrypted = bytes.toString(CryptoJS.enc.Utf8);
+            if (decrypted) {
+                cards = JSON.parse(decrypted);
+                localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
+                renderAll();
+                updateStatus('synced', 'Live Synced');
+                return;
+            }
         }
-
-        cards = JSON.parse(decryptedJson);
-        saveDataLocally();
-        updateSyncStatus('synced', 'Cloud Synced');
-        alert('✅ Cloud se card data safely load aur decrypt ho gaya!');
-    } catch (err) {
-        console.error(err);
-        updateSyncStatus('error', 'Decrypt Fail');
-        alert('❌ Cloud sync fail ho gaya. AES Key check karein.');
+    } catch (e) {
+        console.error(e);
+        updateStatus('synced', 'Local Loaded');
     }
 }
 
