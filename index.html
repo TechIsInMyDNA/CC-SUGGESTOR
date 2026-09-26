@@ -41,7 +41,7 @@
             background: var(--bg);
             color: var(--text);
             padding: 12px;
-            padding-bottom: 90px;
+            padding-bottom: 24px;
             font-size: 13.5px;
             line-height: 1.4;
         }
@@ -91,6 +91,12 @@
             align-items: center;
             gap: 6px;
             color: var(--text-sub);
+            cursor: pointer;
+            transition: border-color 0.2s ease;
+        }
+
+        .sync-pill:hover {
+            border-color: var(--primary);
         }
 
         .dot {
@@ -398,36 +404,6 @@
             height: 100%;
         }
 
-        .bottom-action-bar {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(18, 26, 41, 0.96);
-            backdrop-filter: blur(12px);
-            border-top: 1px solid var(--border);
-            padding: 10px 14px;
-            display: flex;
-            gap: 8px;
-            z-index: 100;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .btn-action {
-            flex: 1;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            font-weight: 800;
-            font-size: 0.82rem;
-            cursor: pointer;
-            text-align: center;
-        }
-
-        .btn-cloud-save { background: var(--primary); color: #0b0f19; }
-        .btn-refresh { background: var(--surface-card); color: var(--text-sub); border: 1px solid var(--border); flex: 0.35; }
-
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -490,6 +466,20 @@
             margin-top: 14px;
         }
 
+        .btn-modal {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 800;
+            font-size: 0.82rem;
+            cursor: pointer;
+            text-align: center;
+        }
+
+        .btn-modal-save { background: var(--primary); color: #0b0f19; }
+        .btn-modal-cancel { background: var(--surface-card); color: var(--text-sub); border: 1px solid var(--border); }
+
         @keyframes blink {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.3; }
@@ -505,7 +495,7 @@
             <p>Smart 30% CIBIL Rotation & Payment Planner</p>
         </div>
         <div class="header-actions">
-            <div class="sync-pill">
+            <div class="sync-pill" onclick="fetchCloudData(false)" title="Click to refresh from Cloud">
                 <div class="dot" id="syncDot"></div>
                 <span id="syncText">Connecting...</span>
             </div>
@@ -529,7 +519,7 @@
         </div>
     </div>
 
-    <!-- Metrics Summary -->
+    <!-- Summary Metrics -->
     <div class="metrics-grid">
         <div class="metric-card">
             <span>Total Limit</span>
@@ -563,12 +553,6 @@
 
     <!-- Main Cards Grid Feed -->
     <div class="cards-feed" id="cardsGrid"></div>
-</div>
-
-<!-- Floating Action Bar -->
-<div class="bottom-action-bar">
-    <button class="btn-action btn-refresh" onclick="fetchCloudData()">☁️ Sync</button>
-    <button class="btn-action btn-cloud-save" onclick="saveAndPushCloud()">💾 Save & Sync Cloud</button>
 </div>
 
 <!-- Add / Edit Modal -->
@@ -615,15 +599,15 @@
         </div>
 
         <div class="modal-btn-row">
-            <button class="btn-action btn-refresh" onclick="closeModal()">Cancel</button>
-            <button class="btn-action btn-cloud-save" onclick="saveModalEntry()">Save Card</button>
+            <button class="btn-modal btn-modal-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn-modal btn-modal-save" onclick="saveModalEntry()">Save Card</button>
         </div>
     </div>
 </div>
 
 <script>
 /**
- * 1. SECURITY & ROBUST GITHUB SYNC ENGINE
+ * 1. SECURITY & ROBUST LIVE SYNC ENGINE
  * - Hardcoded Internal AES Key
  * - 3-Part Obfuscated Token (Safe from GitHub automated push protection)
  */
@@ -643,6 +627,7 @@ function getAuthHeader() {
 }
 
 let fileSha = null;
+let liveSyncTimer = null;
 
 const initialCardsData = [
     { id: 1, bank: "Axis Bank", name: "Airtel Axis Bank Master", acc: "...1994", type: "Mastercard CC", limit: 30489, current: 30489, billDay: 13, dueDay: 4, category: "cc" },
@@ -699,6 +684,7 @@ function init() {
     const dd = String(selectedDate.getDate()).padStart(2, '0');
     document.getElementById('datePicker').value = `${yyyy}-${mm}-${dd}`;
     renderAll();
+    // Auto load cloud silently on startup
     fetchCloudData(true);
 }
 
@@ -860,7 +846,7 @@ function renderCardsFeed(refDate) {
             <div class="card-spend-row">
                 <div class="spend-input-wrap">
                     <label>Spend:</label>
-                    <input type="number" value="${c.current}" onchange="updateSpend(${c.id}, this.value)">
+                    <input type="number" value="${c.current}" oninput="triggerLiveSpendUpdate(${c.id}, this.value)">
                 </div>
                 <span class="badge ${uBadge}">${c.util.toFixed(1)}% Used</span>
             </div>
@@ -882,12 +868,19 @@ function renderCardsFeed(refDate) {
     uBox.style.color = totalUtil > 30 ? 'var(--danger)' : 'var(--success)';
 }
 
-function updateSpend(id, val) {
+function triggerLiveSpendUpdate(id, val) {
     const card = cards.find(c => c.id === id);
     if (card) {
         card.current = parseFloat(val) || 0;
         localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
         renderPriorityBanners(selectedDate);
+        
+        // Debounce automatic cloud push (waits 1.2s after user finishes typing)
+        updateStatus('busy', 'Saving...');
+        clearTimeout(liveSyncTimer);
+        liveSyncTimer = setTimeout(() => {
+            pushEncryptedDataToCloud();
+        }, 1200);
     }
 }
 
@@ -967,18 +960,22 @@ function saveModalEntry() {
     }
 
     closeModal();
-    saveAndPushCloud();
+    localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
+    renderAll();
+    pushEncryptedDataToCloud();
 }
 
 function deleteCard(id) {
     if (confirm("Delete this card?")) {
         cards = cards.filter(c => c.id !== id);
-        saveAndPushCloud();
+        localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
+        renderAll();
+        pushEncryptedDataToCloud();
     }
 }
 
 /**
- * 2. ROBUST GITHUB AES-256 SYNC ENGINE
+ * 2. AUTOMATIC LIVE BACKGROUND SYNC ENGINE
  */
 function updateStatus(state, msg) {
     const dot = document.getElementById('syncDot');
@@ -1010,10 +1007,8 @@ async function getLatestShaFromGitHub(token, url) {
     return null;
 }
 
-async function saveAndPushCloud() {
-    localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
-    renderAll();
-    updateStatus('busy', 'Saving & Syncing...');
+async function pushEncryptedDataToCloud() {
+    updateStatus('busy', 'Live Syncing...');
 
     try {
         const rawJson = JSON.stringify(cards);
@@ -1027,11 +1022,11 @@ async function saveAndPushCloud() {
         const token = getAuthHeader();
         const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`;
 
-        // Robust SHA Check to prevent 409 conflict
+        // Auto SHA check
         fileSha = await getLatestShaFromGitHub(token, url);
 
         const body = {
-            message: `Cloud Encrypted Sync: ${new Date().toLocaleString()}`,
+            message: `Live Sync: ${new Date().toLocaleString()}`,
             content: toBase64Utf8(fileDoc),
             sha: fileSha || undefined
         };
@@ -1048,20 +1043,18 @@ async function saveAndPushCloud() {
         if (res.ok) {
             const resData = await res.json();
             fileSha = resData.content.sha;
-            updateStatus('synced', 'Cloud Saved Successfully');
-            alert('✅ Cloud Saved Successfully!');
+            updateStatus('synced', 'Live Synced');
         } else {
             throw new Error('API Sync Failed: ' + res.status);
         }
     } catch (e) {
         console.error(e);
-        updateStatus('error', 'Sync Failed');
-        alert('❌ Sync Fail ho gaya. Connection ya Token check karein.');
+        updateStatus('error', 'Sync Retry');
     }
 }
 
 async function fetchCloudData(silent = false) {
-    if (!silent) updateStatus('busy', 'Fetching Cloud...');
+    if (!silent) updateStatus('busy', 'Checking Cloud...');
 
     try {
         const token = getAuthHeader();
@@ -1086,13 +1079,12 @@ async function fetchCloudData(silent = false) {
                 localStorage.setItem('sgm_cc_dataset', JSON.stringify(cards));
                 renderAll();
                 updateStatus('synced', 'Live Synced');
-                if (!silent) alert('✅ Cloud Data Successfully Loaded!');
                 return;
             }
         }
     } catch (e) {
         console.error(e);
-        updateStatus('synced', 'Local Ready');
+        updateStatus('synced', 'Ready');
     }
 }
 
