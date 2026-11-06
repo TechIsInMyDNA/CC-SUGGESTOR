@@ -198,7 +198,7 @@
         }
 
         .b-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .b-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
+        .b-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(168, 185, 129, 0.3); }
         .b-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
         .b-rupay { background: var(--rupay-bg); color: var(--rupay); border: 1px solid rgba(168, 85, 247, 0.3); }
 
@@ -607,9 +607,10 @@
 
 <script>
 /**
- * 1. SECURITY & ROBUST LIVE SYNC ENGINE
+ * 1. SECURITY & DATA-BRANCH ROBUST LIVE SYNC ENGINE
  * - Hardcoded Internal AES Key
  * - 3-Part Obfuscated Token (Safe from GitHub automated push protection)
+ * - Isolated Data Branch: Updates 'data-storage' branch so GitHub Pages does not re-deploy continuously
  */
 const INTERNAL_AES_PASSPHRASE = "SGM_FINANCE_SECURE_VAULT_2026_PROD";
 
@@ -617,6 +618,8 @@ const GITHUB_REPO = {
     owner: "TechIsInMyDNA",
     repo: "CC-SUGGESTOR",
     file: "data.json",
+    baseBranch: "main",
+    dataBranch: "data-storage",
     t1: ["g", "h", "p", "_", "z", "8", "R", "K", "U", "F", "v", "k"].join(''),
     t2: ["I", "T", "g", "q", "9", "u", "S", "H", "y", "Y", "Z", "D"].join(''),
     t3: ["X", "C", "z", "i", "L", "x", "J", "0", "e", "1", "4", "N", "P", "B", "O", "Q"].join('')
@@ -684,7 +687,7 @@ function init() {
     const dd = String(selectedDate.getDate()).padStart(2, '0');
     document.getElementById('datePicker').value = `${yyyy}-${mm}-${dd}`;
     renderAll();
-    // Auto load cloud silently on startup
+    // Auto load from data branch silently on startup
     fetchCloudData(true);
 }
 
@@ -975,7 +978,7 @@ function deleteCard(id) {
 }
 
 /**
- * 2. AUTOMATIC LIVE BACKGROUND SYNC ENGINE
+ * 2. AUTOMATIC LIVE BACKGROUND SYNC ENGINE (DATA-STORAGE BRANCH)
  */
 function updateStatus(state, msg) {
     const dot = document.getElementById('syncDot');
@@ -992,9 +995,46 @@ function fromBase64Utf8(str) {
     return decodeURIComponent(Array.prototype.map.call(atob(str.replace(/\s/g, '')), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 }
 
+// Automatically creates the data-storage branch from baseBranch if it doesn't exist
+async function ensureDataBranchExists(token) {
+    const apiBase = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}`;
+    
+    // Check if dataBranch already exists
+    const checkRes = await fetch(`${apiBase}/git/ref/heads/${GITHUB_REPO.dataBranch}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    
+    if (checkRes.ok) return true;
+
+    // If not found, get SHA of baseBranch
+    const baseRefRes = await fetch(`${apiBase}/git/ref/heads/${GITHUB_REPO.baseBranch}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+
+    if (!baseRefRes.ok) return false;
+
+    const baseData = await baseRefRes.json();
+    const baseSha = baseData.object.sha;
+
+    // Create the new branch from baseBranch SHA
+    const createRes = await fetch(`${apiBase}/git/refs`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            ref: `refs/heads/${GITHUB_REPO.dataBranch}`,
+            sha: baseSha
+        })
+    });
+
+    return createRes.ok;
+}
+
 async function getLatestShaFromGitHub(token, url) {
     try {
-        const res = await fetch(url + `?_t=${Date.now()}`, {
+        const res = await fetch(url + `&_t=${Date.now()}`, {
             headers: { 'Authorization': `Bearer ${token}` }
         });
         if (res.ok) {
@@ -1011,6 +1051,9 @@ async function pushEncryptedDataToCloud() {
     updateStatus('busy', 'Live Syncing...');
 
     try {
+        const token = getAuthHeader();
+        await ensureDataBranchExists(token);
+
         const rawJson = JSON.stringify(cards);
         const cipherText = CryptoJS.AES.encrypt(rawJson, INTERNAL_AES_PASSPHRASE).toString();
 
@@ -1019,19 +1062,19 @@ async function pushEncryptedDataToCloud() {
             payload: cipherText
         }, null, 2);
 
-        const token = getAuthHeader();
-        const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`;
+        const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}?ref=${GITHUB_REPO.dataBranch}`;
 
-        // Auto SHA check
+        // Get latest SHA from dataBranch to prevent 409 conflict
         fileSha = await getLatestShaFromGitHub(token, url);
 
         const body = {
-            message: `Live Sync: ${new Date().toLocaleString()}`,
+            message: `Live Sync [Data Branch]: ${new Date().toLocaleString()}`,
             content: toBase64Utf8(fileDoc),
+            branch: GITHUB_REPO.dataBranch,
             sha: fileSha || undefined
         };
 
-        const res = await fetch(url, {
+        const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -1058,11 +1101,16 @@ async function fetchCloudData(silent = false) {
 
     try {
         const token = getAuthHeader();
-        const url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}`;
+        
+        // Try fetching from dataBranch first
+        let url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}?ref=${GITHUB_REPO.dataBranch}&_t=${Date.now()}`;
+        let res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
 
-        const res = await fetch(url + `?_t=${Date.now()}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
+        // Fallback to baseBranch if dataBranch hasn't pushed yet
+        if (!res.ok) {
+            url = `https://api.github.com/repos/${GITHUB_REPO.owner}/${GITHUB_REPO.repo}/contents/${GITHUB_REPO.file}?ref=${GITHUB_REPO.baseBranch}&_t=${Date.now()}`;
+            res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+        }
 
         if (!res.ok) throw new Error('Could not fetch file');
 
