@@ -198,9 +198,10 @@
         }
 
         .b-danger { background: var(--danger-bg); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-        .b-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(168, 185, 129, 0.3); }
+        .b-success { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.3); }
         .b-warning { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.3); }
         .b-rupay { background: var(--rupay-bg); color: var(--rupay); border: 1px solid rgba(168, 85, 247, 0.3); }
+        .b-primary { background: var(--primary-bg); color: var(--primary); border: 1px solid rgba(56, 189, 248, 0.3); }
 
         .metrics-grid {
             display: grid;
@@ -543,6 +544,7 @@
     <div class="controls-row">
         <div class="filter-scroll">
             <button class="filter-pill active" onclick="setFilter('all', this)">All</button>
+            <button class="filter-pill" onclick="setFilter('safe-days', this)">🛡️ Safe to Use (Days)</button>
             <button class="filter-pill" onclick="setFilter('due', this)">⏳ Due Date</button>
             <button class="filter-pill" onclick="setFilter('bill', this)">⚡ Bill Date</button>
             <button class="filter-pill" onclick="setFilter('over30', this)">⚠️ Over 30%</button>
@@ -681,6 +683,20 @@ function getDaysUntilTargetDay(targetDay, refDate) {
     return Math.round(diffMs / (1000 * 60 * 60 * 24));
 }
 
+function getTotalGracePeriod(card, refDate) {
+    const y = refDate.getFullYear();
+    const m = refDate.getMonth();
+    let nextBillDate = new Date(y, m, card.billDay);
+    if (nextBillDate < refDate) nextBillDate = new Date(y, m + 1, card.billDay);
+    
+    let nextDueDate = new Date(nextBillDate.getFullYear(), nextBillDate.getMonth(), card.dueDay);
+    if (nextDueDate <= nextBillDate) {
+        nextDueDate = new Date(nextBillDate.getFullYear(), nextBillDate.getMonth() + 1, card.dueDay);
+    }
+    
+    return Math.round((nextDueDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 function init() {
     const yyyy = selectedDate.getFullYear();
     const mm = String(selectedDate.getMonth() + 1).padStart(2, '0');
@@ -731,18 +747,7 @@ function renderPriorityBanners(refDate) {
     const bestSwipe = cards
         .map(c => {
             const daysToBill = getDaysUntilTargetDay(c.billDay, refDate);
-            
-            const y = refDate.getFullYear();
-            const m = refDate.getMonth();
-            let nextBillDate = new Date(y, m, c.billDay);
-            if (nextBillDate < refDate) nextBillDate = new Date(y, m + 1, c.billDay);
-            
-            let nextDueDate = new Date(nextBillDate.getFullYear(), nextBillDate.getMonth(), c.dueDay);
-            if (nextDueDate <= nextBillDate) {
-                nextDueDate = new Date(nextBillDate.getFullYear(), nextBillDate.getMonth() + 1, c.dueDay);
-            }
-            
-            const totalGraceLeft = Math.round((nextDueDate.getTime() - refDate.getTime()) / (1000 * 60 * 60 * 24));
+            const totalGraceLeft = getTotalGracePeriod(c, refDate);
             const safe30 = c.limit * 0.30;
             const buffer = safe30 - c.current;
 
@@ -799,13 +804,22 @@ function renderCardsFeed(refDate) {
         const util = c.limit > 0 ? (c.current / c.limit) * 100 : 0;
         const dueDays = getDaysUntilTargetDay(c.dueDay, refDate);
         const billDays = getDaysUntilTargetDay(c.billDay, refDate);
-        return { ...c, util, dueDays, billDays };
+        const graceDays = getTotalGracePeriod(c, refDate);
+        const safeBuffer = Math.round((c.limit * 0.30) - c.current);
+        return { ...c, util, dueDays, billDays, graceDays, safeBuffer };
     });
 
-    if (activeFilter === 'rupay') list = list.filter(c => c.type.toLowerCase().includes('rupay') || c.category === 'rupay');
-    if (activeFilter === 'over30') list = list.filter(c => c.util > 30);
-    if (activeFilter === 'due') list.sort((a, b) => a.dueDays - b.dueDays);
-    if (activeFilter === 'bill') list.sort((a, b) => a.billDays - b.billDays);
+    if (activeFilter === 'safe-days') {
+        list = list.filter(c => c.safeBuffer > 0 && c.util < 30).sort((a, b) => b.graceDays - a.graceDays || b.safeBuffer - a.safeBuffer);
+    } else if (activeFilter === 'rupay') {
+        list = list.filter(c => c.type.toLowerCase().includes('rupay') || c.category === 'rupay');
+    } else if (activeFilter === 'over30') {
+        list = list.filter(c => c.util > 30);
+    } else if (activeFilter === 'due') {
+        list.sort((a, b) => a.dueDays - b.dueDays);
+    } else if (activeFilter === 'bill') {
+        list.sort((a, b) => a.billDays - b.billDays);
+    }
 
     list.forEach(c => {
         totalLimit += c.limit;
@@ -820,6 +834,10 @@ function renderCardsFeed(refDate) {
 
         const isRuPay = c.type.toLowerCase().includes('rupay') || c.category === 'rupay';
 
+        const graceTagHtml = activeFilter === 'safe-days' 
+            ? `<span class="badge b-primary">~${c.graceDays}d Free (Buffer: ₹${c.safeBuffer.toLocaleString('en-IN')})</span>`
+            : `<span class="badge ${isRuPay ? 'b-rupay' : 'b-success'}">${c.type}</span>`;
+
         const tile = document.createElement('div');
         tile.className = 'card-tile';
         tile.innerHTML = `
@@ -829,7 +847,7 @@ function renderCardsFeed(refDate) {
                     <div class="card-meta">${c.bank} • ${c.acc}</div>
                 </div>
                 <div style="display:flex; align-items:center; gap:5px;">
-                    <span class="badge ${isRuPay ? 'b-rupay' : 'b-success'}">${c.type}</span>
+                    ${graceTagHtml}
                     <button class="tool-btn" onclick="openEditModal(${c.id})">✏️</button>
                     <button class="tool-btn" style="color:var(--danger);" onclick="deleteCard(${c.id})">🗑️</button>
                 </div>
@@ -851,7 +869,10 @@ function renderCardsFeed(refDate) {
                     <label>Spend:</label>
                     <input type="number" value="${c.current}" oninput="triggerLiveSpendUpdate(${c.id}, this.value)">
                 </div>
-                <span class="badge ${uBadge}">${c.util.toFixed(1)}% Used</span>
+                <div style="display:flex; align-items:center; gap:6px;">
+                    ${activeFilter !== 'safe-days' && c.util < 30 ? `<span class="badge b-primary">~${c.graceDays}d Free</span>` : ''}
+                    <span class="badge ${uBadge}">${c.util.toFixed(1)}% Used</span>
+                </div>
             </div>
 
             <div class="meter-bar">
@@ -861,11 +882,19 @@ function renderCardsFeed(refDate) {
         feed.appendChild(tile);
     });
 
-    document.getElementById('sumLimit').innerText = '₹' + totalLimit.toLocaleString('en-IN');
-    document.getElementById('sumSafe').innerText = '₹' + totalSafe.toLocaleString('en-IN');
-    document.getElementById('sumSpend').innerText = '₹' + totalSpend.toLocaleString('en-IN');
+    // Calculate global summary metrics across all cards regardless of active filter
+    let globalLimit = 0, globalSafe = 0, globalSpend = 0;
+    cards.forEach(c => {
+        globalLimit += c.limit;
+        globalSafe += Math.round(c.limit * 0.30);
+        globalSpend += c.current;
+    });
 
-    const totalUtil = totalLimit > 0 ? ((totalSpend / totalLimit) * 100).toFixed(1) : 0;
+    document.getElementById('sumLimit').innerText = '₹' + globalLimit.toLocaleString('en-IN');
+    document.getElementById('sumSafe').innerText = '₹' + globalSafe.toLocaleString('en-IN');
+    document.getElementById('sumSpend').innerText = '₹' + globalSpend.toLocaleString('en-IN');
+
+    const totalUtil = globalLimit > 0 ? ((globalSpend / globalLimit) * 100).toFixed(1) : 0;
     const uBox = document.getElementById('sumUtil');
     uBox.innerText = totalUtil + '%';
     uBox.style.color = totalUtil > 30 ? 'var(--danger)' : 'var(--success)';
